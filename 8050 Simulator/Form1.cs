@@ -20,12 +20,12 @@ namespace _8050_Simulator
         static int SIGN = 7;
         int currentByte = 0;
         string[] memory = new string[0xFFFF];
-        string[] programMemory = { "3C", "3C", "D3", "11","C3", "00", "00", "76"};
+        string[] programMemory = { "3E", "80", "8F", "9F", "8F", "C3", "02", "00", "76"};
         string[] dataMemory = { "0A", "0A" };
         List<int> stack = new List<int>();
         UInt16 dataMemoryStartAddr = 0x0F00;
         UInt16 programStartAddr = 0x0000;
-        UInt16 stackPointer = 0xFFFF;
+        int stackPointer = 0xFFFF;
         int flags = 0;
         int regA = 0, regB = 0, regC = 0, regD = 0, regE = 0, regH = 0x00, regL = 0x00;
         
@@ -46,6 +46,7 @@ namespace _8050_Simulator
             regL = 0;
             flags = 0;
             out11(0);
+            setCarry();
         }
 
         public Form1()
@@ -1320,6 +1321,232 @@ namespace _8050_Simulator
                         currentByte = returnFromCall() - 1;
                         break;
 
+                    case "07": //Rotate left and set carry if D7 = 1
+                        regA = ((regA << 1) | ((regA & 0x80) >> 7)) & 0xFF;
+                        if ((regA & 0x01) == 1)
+                        {
+                            setCarry();
+                        }
+                        else
+                        {
+                            resetCarry();
+                        }
+                        noFlagUpdates = 1;
+                        break;
+
+                    case "F8": // Return on Minus
+                        if (checkSignPositive())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "D0": // Return on No Carry
+                        if (!checkCarry())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "C0": // Return on NZ
+                        if (!checkZero())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "F0": // Return on Positive
+                        if (checkSignPositive())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "E8": // Return on PE
+                        if (checkParityEven())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "E0": // Return on PO
+                        if (!checkParityEven())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "0F": //Rotate right and set carry if D0 = 1
+                        temp = regA;
+                        regA = ((temp & 0xFE) >> 1);
+                        regA |= ((temp & 0x01) << 7);
+                        if ((regA & 0x01) == 1)
+                        {
+                            setCarry();
+                        }
+                        else
+                        {
+                            resetCarry();
+                        }
+                        noFlagUpdates = 1;
+                        break;
+
+                    case "C8": // Return on NZ
+                        if (checkZero())
+                        {
+                            currentByte = returnFromCall() - 1; // corrects for byte increment
+                        }
+                        break;
+
+                    case "9F": // subtract with borrow
+                        regA += ((~regA - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regA & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "98": // subtract with borrow
+                        regA += ((~regB - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regB & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "99": // subtract with borrow
+                        regA += ((~regC - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regC & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "9A": // subtract with borrow
+                        regA += ((~regD - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regD & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "9B": // subtract with borrow
+                        regA += ((~regE - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regE & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "9C": // subtract with borrow
+                        regA += ((~regH - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regH & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "9D": // subtract with borrow
+                        regA += ((~regL - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (regL & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "9E": // subtract with borrow
+                        M = regL;
+                        M += (regH << 8);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        regA += ((~temp - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (temp & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "DE": // subtract with borrow
+                        currentByte++;
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        regA += ((~temp - checkCarry_Int()) & 0x1FF);
+                        setAuxCarry(((regA & 0xF) + (temp & 0xF)) >> 4);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "22":
+                        currentByte++;
+                        M = Convert.ToInt16(memory[currentByte], 16);
+                        currentByte++;
+                        M += (Convert.ToInt16(memory[currentByte], 16) << 8);
+                        memory[M] = regL.ToString("X2");
+                        memory[M + 1] = regH.ToString("X2");
+                        break;
+
+                    case "F9":
+                        stackPointer = regL;
+                        stackPointer += (regH << 8);
+                        break;
+
+                    case "32":
+                        currentByte++;
+                        M = Convert.ToInt16(memory[currentByte], 16);
+                        currentByte++;
+                        M += (Convert.ToInt16(memory[currentByte], 16) << 8);
+                        memory[M] = regA.ToString("X2");
+                        break;
+
+                    case "02":
+                        M = regC;
+                        M += regB;
+                        memory[M] = regA.ToString("X2");
+                        break;
+
+                    case "12":
+                        M = regE;
+                        M += regD;
+                        memory[M] = regA.ToString("X2");
+                        break;
+
+                    case "37":
+                        setCarry();
+                        break;
+
+                    case "97": // Sub no borrow
+                        regA += ((~regA + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "90": // Sub no borrow
+                        regA += ((~regB + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "91": // Sub no borrow
+                        regA += ((~regC + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "92": // Sub no borrow
+                        regA += ((~regD + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "93": // Sub no borrow
+                        regA += ((~regE + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "94": // Sub no borrow
+                        regA += ((~regH + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "95": // Sub no borrow
+                        regA += ((~regL + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "96": // Sub no borrow
+                        M = regL;
+                        M += (regH << 8);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        regA += ((~temp + 1) & 0x1FF);
+                        setFlagsZPSForReg(regA);
+                        break;
+
+                    case "D6":
+                        currentByte++;
+                        temp = Convert.ToByte(memory[currentByte], 16);
+                        regA += ((~temp + 1) & 0x1FF);
+                        break;
+
+
+
+
 
 
 
@@ -1525,6 +1752,11 @@ namespace _8050_Simulator
         private bool checkCarry()
         {
             return ((flags & (1 << CARRY)) != 0);
+        }
+
+        private int checkCarry_Int()
+        {
+            return (flags & (1 << CARRY));
         }
 
         private bool checkSignPositive()

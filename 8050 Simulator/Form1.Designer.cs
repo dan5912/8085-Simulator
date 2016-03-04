@@ -468,7 +468,7 @@
             this.Controls.Add(this.regBTextbox);
             this.Controls.Add(this.runButton);
             this.Name = "Form1";
-            this.Text = "Form1";
+            this.Text = "8085 Simulator";
             this.ResumeLayout(false);
             this.PerformLayout();
 

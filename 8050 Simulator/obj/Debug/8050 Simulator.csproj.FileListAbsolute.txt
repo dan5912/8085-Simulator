@@ -10,3 +10,9 @@
 Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\bin\Debug\8050 Simulator.exe.config
 Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\8050 Simulator.exe
 Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\8050 Simulator.pdb
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\bin\Debug\8050 Simulator.exe
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\bin\Debug\8050 Simulator.pdb
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\8050 Simulator.csprojResolveAssemblyReference.cache
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\_8050_Simulator.Form1.resources
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\_8050_Simulator.Properties.Resources.resources
+Z:\daniel On My Mac\GitHub\8085-Simulator\8050 Simulator\obj\Debug\8050 Simulator.csproj.GenerateResource.Cache
