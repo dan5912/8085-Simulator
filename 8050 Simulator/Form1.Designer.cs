@@ -49,7 +49,6 @@
             this.label9 = new System.Windows.Forms.Label();
             this.StepButton = new System.Windows.Forms.Button();
             this.resetButton = new System.Windows.Forms.Button();
-            this.opcodesTextbox = new System.Windows.Forms.ListBox();
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.outP0 = new System.Windows.Forms.CheckBox();
@@ -65,6 +64,23 @@
             this.label12 = new System.Windows.Forms.Label();
             this.pcTextbox = new System.Windows.Forms.TextBox();
             this.PC = new System.Windows.Forms.Label();
+            this.opcodesListbox = new System.Windows.Forms.ListBox();
+            this.hexTextbox = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.loadHexButton = new System.Windows.Forms.Button();
+            this.in7 = new System.Windows.Forms.CheckBox();
+            this.in6 = new System.Windows.Forms.CheckBox();
+            this.in5 = new System.Windows.Forms.CheckBox();
+            this.in4 = new System.Windows.Forms.CheckBox();
+            this.in3 = new System.Windows.Forms.CheckBox();
+            this.in2 = new System.Windows.Forms.CheckBox();
+            this.in1 = new System.Windows.Forms.CheckBox();
+            this.in0 = new System.Windows.Forms.CheckBox();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.assemblyTextbox = new System.Windows.Forms.TextBox();
+            this.label16 = new System.Windows.Forms.Label();
+            this.assembleButton = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // runButton
@@ -225,7 +241,6 @@
             // StackListBox
             // 
             this.StackListBox.Cursor = System.Windows.Forms.Cursors.No;
-            this.StackListBox.Enabled = false;
             this.StackListBox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.StackListBox.FormattingEnabled = true;
             this.StackListBox.ImeMode = System.Windows.Forms.ImeMode.Alpha;
@@ -267,16 +282,6 @@
             this.resetButton.Text = "Reset";
             this.resetButton.UseVisualStyleBackColor = true;
             this.resetButton.Click += new System.EventHandler(this.resetButton_Click);
-            // 
-            // opcodesTextbox
-            // 
-            this.opcodesTextbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.opcodesTextbox.FormattingEnabled = true;
-            this.opcodesTextbox.ItemHeight = 20;
-            this.opcodesTextbox.Location = new System.Drawing.Point(387, 107);
-            this.opcodesTextbox.Name = "opcodesTextbox";
-            this.opcodesTextbox.Size = new System.Drawing.Size(270, 84);
-            this.opcodesTextbox.TabIndex = 21;
             // 
             // label10
             // 
@@ -424,12 +429,190 @@
             this.PC.TabIndex = 44;
             this.PC.Text = "Program Counter";
             // 
+            // opcodesListbox
+            // 
+            this.opcodesListbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.opcodesListbox.FormattingEnabled = true;
+            this.opcodesListbox.ItemHeight = 20;
+            this.opcodesListbox.Location = new System.Drawing.Point(387, 126);
+            this.opcodesListbox.Name = "opcodesListbox";
+            this.opcodesListbox.Size = new System.Drawing.Size(203, 44);
+            this.opcodesListbox.TabIndex = 21;
+            // 
+            // hexTextbox
+            // 
+            this.hexTextbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.hexTextbox.Location = new System.Drawing.Point(95, 150);
+            this.hexTextbox.Multiline = true;
+            this.hexTextbox.Name = "hexTextbox";
+            this.hexTextbox.Size = new System.Drawing.Size(273, 91);
+            this.hexTextbox.TabIndex = 45;
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.Location = new System.Drawing.Point(40, 150);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(43, 18);
+            this.label13.TabIndex = 46;
+            this.label13.Text = "HEX:";
+            // 
+            // loadHexButton
+            // 
+            this.loadHexButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.loadHexButton.Location = new System.Drawing.Point(279, 247);
+            this.loadHexButton.Name = "loadHexButton";
+            this.loadHexButton.Size = new System.Drawing.Size(89, 26);
+            this.loadHexButton.TabIndex = 47;
+            this.loadHexButton.Text = "Load Hex";
+            this.loadHexButton.UseVisualStyleBackColor = true;
+            this.loadHexButton.Click += new System.EventHandler(this.loadHexButton_Click);
+            // 
+            // in7
+            // 
+            this.in7.AutoSize = true;
+            this.in7.Location = new System.Drawing.Point(658, 268);
+            this.in7.Name = "in7";
+            this.in7.Size = new System.Drawing.Size(15, 14);
+            this.in7.TabIndex = 57;
+            this.in7.UseVisualStyleBackColor = true;
+            // 
+            // in6
+            // 
+            this.in6.AutoSize = true;
+            this.in6.Location = new System.Drawing.Point(679, 268);
+            this.in6.Name = "in6";
+            this.in6.Size = new System.Drawing.Size(15, 14);
+            this.in6.TabIndex = 56;
+            this.in6.UseVisualStyleBackColor = true;
+            // 
+            // in5
+            // 
+            this.in5.AutoSize = true;
+            this.in5.Location = new System.Drawing.Point(700, 268);
+            this.in5.Name = "in5";
+            this.in5.Size = new System.Drawing.Size(15, 14);
+            this.in5.TabIndex = 55;
+            this.in5.UseVisualStyleBackColor = true;
+            // 
+            // in4
+            // 
+            this.in4.AutoSize = true;
+            this.in4.Location = new System.Drawing.Point(721, 268);
+            this.in4.Name = "in4";
+            this.in4.Size = new System.Drawing.Size(15, 14);
+            this.in4.TabIndex = 54;
+            this.in4.UseVisualStyleBackColor = true;
+            // 
+            // in3
+            // 
+            this.in3.AutoSize = true;
+            this.in3.Location = new System.Drawing.Point(742, 268);
+            this.in3.Name = "in3";
+            this.in3.Size = new System.Drawing.Size(15, 14);
+            this.in3.TabIndex = 53;
+            this.in3.UseVisualStyleBackColor = true;
+            // 
+            // in2
+            // 
+            this.in2.AutoSize = true;
+            this.in2.Location = new System.Drawing.Point(763, 268);
+            this.in2.Name = "in2";
+            this.in2.Size = new System.Drawing.Size(15, 14);
+            this.in2.TabIndex = 52;
+            this.in2.UseVisualStyleBackColor = true;
+            // 
+            // in1
+            // 
+            this.in1.AutoSize = true;
+            this.in1.Location = new System.Drawing.Point(784, 268);
+            this.in1.Name = "in1";
+            this.in1.Size = new System.Drawing.Size(15, 14);
+            this.in1.TabIndex = 51;
+            this.in1.UseVisualStyleBackColor = true;
+            // 
+            // in0
+            // 
+            this.in0.AutoSize = true;
+            this.in0.Location = new System.Drawing.Point(805, 268);
+            this.in0.Name = "in0";
+            this.in0.Size = new System.Drawing.Size(15, 14);
+            this.in0.TabIndex = 50;
+            this.in0.UseVisualStyleBackColor = true;
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(655, 285);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(163, 13);
+            this.label14.TabIndex = 49;
+            this.label14.Text = "7     6      5     4     3     2     1     0";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(509, 264);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(127, 20);
+            this.label15.TabIndex = 48;
+            this.label15.Text = "Input (Port 0x12)";
+            // 
+            // assemblyTextbox
+            // 
+            this.assemblyTextbox.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.assemblyTextbox.Location = new System.Drawing.Point(893, 38);
+            this.assemblyTextbox.Multiline = true;
+            this.assemblyTextbox.Name = "assemblyTextbox";
+            this.assemblyTextbox.ScrollBars = System.Windows.Forms.ScrollBars.Horizontal;
+            this.assemblyTextbox.Size = new System.Drawing.Size(338, 379);
+            this.assemblyTextbox.TabIndex = 58;
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.Location = new System.Drawing.Point(889, 15);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(77, 20);
+            this.label16.TabIndex = 59;
+            this.label16.Text = "Assembly";
+            // 
+            // assembleButton
+            // 
+            this.assembleButton.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.assembleButton.Location = new System.Drawing.Point(1125, 423);
+            this.assembleButton.Name = "assembleButton";
+            this.assembleButton.Size = new System.Drawing.Size(106, 32);
+            this.assembleButton.TabIndex = 60;
+            this.assembleButton.Text = "Assemble";
+            this.assembleButton.UseVisualStyleBackColor = true;
+            this.assembleButton.Click += new System.EventHandler(this.assembleButton_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.AutoScroll = true;
-            this.ClientSize = new System.Drawing.Size(832, 359);
+            this.ClientSize = new System.Drawing.Size(1243, 482);
+            this.Controls.Add(this.assembleButton);
+            this.Controls.Add(this.label16);
+            this.Controls.Add(this.assemblyTextbox);
+            this.Controls.Add(this.in7);
+            this.Controls.Add(this.in6);
+            this.Controls.Add(this.in5);
+            this.Controls.Add(this.in4);
+            this.Controls.Add(this.in3);
+            this.Controls.Add(this.in2);
+            this.Controls.Add(this.in1);
+            this.Controls.Add(this.in0);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.loadHexButton);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.hexTextbox);
             this.Controls.Add(this.PC);
             this.Controls.Add(this.pcTextbox);
             this.Controls.Add(this.label12);
@@ -445,7 +628,7 @@
             this.Controls.Add(this.outP0);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label10);
-            this.Controls.Add(this.opcodesTextbox);
+            this.Controls.Add(this.opcodesListbox);
             this.Controls.Add(this.resetButton);
             this.Controls.Add(this.StepButton);
             this.Controls.Add(this.label9);
@@ -497,7 +680,6 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Button StepButton;
         private System.Windows.Forms.Button resetButton;
-        private System.Windows.Forms.ListBox opcodesTextbox;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.CheckBox outP0;
@@ -513,6 +695,23 @@
         private System.Windows.Forms.Label label12;
         private System.Windows.Forms.TextBox pcTextbox;
         private System.Windows.Forms.Label PC;
+        private System.Windows.Forms.ListBox opcodesListbox;
+        private System.Windows.Forms.TextBox hexTextbox;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Button loadHexButton;
+        private System.Windows.Forms.CheckBox in7;
+        private System.Windows.Forms.CheckBox in6;
+        private System.Windows.Forms.CheckBox in5;
+        private System.Windows.Forms.CheckBox in4;
+        private System.Windows.Forms.CheckBox in3;
+        private System.Windows.Forms.CheckBox in2;
+        private System.Windows.Forms.CheckBox in1;
+        private System.Windows.Forms.CheckBox in0;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.TextBox assemblyTextbox;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Button assembleButton;
     }
 }
 

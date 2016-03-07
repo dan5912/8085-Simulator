@@ -20,8 +20,8 @@ namespace _8050_Simulator
         static int SIGN = 7;
         int currentByte = 0;
         string[] memory = new string[0xFFFF];
-        string[] programMemory = { "3E", "80", "8F", "9F", "8F", "C3", "02", "00", "76"};
-        string[] dataMemory = { "0A", "0A" };
+        string[] programMemory = { "76"};
+        string[] dataMemory = {""};
         List<int> stack = new List<int>();
         UInt16 dataMemoryStartAddr = 0x0F00;
         UInt16 programStartAddr = 0x0000;
@@ -46,16 +46,13 @@ namespace _8050_Simulator
             regL = 0;
             flags = 0;
             out11(0);
-            setCarry();
+            stackPointer = 0xFFFF;
         }
 
         public Form1()
         {
             InitializeComponent();
-            for (int i = 0; i < programMemory.Length; i++)
-            {
-                memory[programStartAddr + i] = programMemory[i];
-            }
+            
             for (int i = 0; i < dataMemory.Length; i++)
             {
                 memory[dataMemoryStartAddr+ i] = dataMemory[i];
@@ -93,7 +90,7 @@ namespace _8050_Simulator
                 }
                 else
                 {
-                    Thread.Sleep(200);
+                    Thread.Sleep(1000);
                 }
             }
             worker.ReportProgress(0);
@@ -102,13 +99,15 @@ namespace _8050_Simulator
         private void runWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             updateRegUI();
-            updateOut_UI(outputPort);  
+            updateIO_UI(outputPort, inputPort);
+            updateStackUI();
         }
 
         private void runWorker_Completed(object sender, RunWorkerCompletedEventArgs e)
         {
             runButton.Enabled = true;
         }
+
         private void StepButton_Click(object sender, EventArgs e)
         {
             if (currentByte < memory.Length)
@@ -118,7 +117,8 @@ namespace _8050_Simulator
                 halted = true;
             }
             updateRegUI();
-            updateOut_UI(outputPort);
+            updateIO_UI(outputPort, inputPort);
+            updateStackUI();
         }
 
         private void resetButton_Click(object sender, EventArgs e)
@@ -128,207 +128,150 @@ namespace _8050_Simulator
             initializeRegToZero();
             halted = true;
             updateRegUI();
-            updateOut_UI(outputPort);
+            updateIO_UI(outputPort, inputPort);
+            updateStackUI();
         }
 
-        private void assemble()
+        private void loadHex()
         {
-        
+            programMemory = hexTextbox.Text.Split(' ');
+            for (int i = 0; i < programMemory.Length; i++)
+            {
+                memory[programStartAddr + i] = programMemory[i];
+            }
         }
 
         private void stepForward()
         {
-            int noFlagUpdates = 0;
             int M = 0;
             int temp = 0;
-            
-            
 
-            
+
+
+
             {
                 switch (memory[currentByte])
                 {
                     case "CE":
                         currentByte++;
                         temp = Convert.ToInt16(memory[currentByte], 16);
-                        setAuxCarry(((regA & 0xF) + (temp & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += temp + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(temp);
                         break;
 
                     case "8F":
-                        setAuxCarry(((regA & 0xF) + (regA & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regA + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regA);
                         break;
-                   
+
                     case "88":
-                        setAuxCarry(((regA & 0xF) + (regB & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regB + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regB);
                         break;
 
                     case "89":
-                        setAuxCarry(((regA & 0xF) + (regC & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regC + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regC);
                         break;
 
                     case "8A":
-                        setAuxCarry(((regA & 0xF) + (regD & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regD + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regD);
                         break;
 
                     case "8B":
-                        setAuxCarry(((regA & 0xF) + (regD & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regD + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regE);
                         break;
 
                     case "8C":
-                        setAuxCarry(((regA & 0xF) + (regH & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regH + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regE);
                         break;
 
                     case "8D":
-                        setAuxCarry(((regA & 0xF) + (regL & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += regL + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(regL);
                         break;
 
                     case "8E":
                         M = regL;
                         M |= (regH << 8);
                         temp = Convert.ToInt16(memory[M], 16);
-                        setAuxCarry(((regA & 0xF) + (temp & 0xF) + (flags & (1 << CARRY))) >> 4);
-                        regA += temp + (flags & (1 << CARRY) >> CARRY);
-                        setFlagsZPSForReg(regA);
+                        ADC(temp);
                         break;
 
                     case "87":
-                        setAuxCarry(((regA & 0xF) + (regA & 0xF)) >> 4);
-                        regA += regA;
-                        setFlagsZPSForReg(regA);
+                        ADD(regA);
                         break;
 
                     case "80":
-                        setAuxCarry(((regA & 0xF) + (regB & 0xF)) >> 4);
-                        regA += regB;
-                        setFlagsZPSForReg(regA);
+                        ADD(regB);
                         break;
 
                     case "81":
-                        setAuxCarry(((regA & 0xF) + (regC & 0xF)) >> 4);
-                        regA += regC;
-                        setFlagsZPSForReg(regA);
+                        ADD(regC);
                         break;
 
                     case "82":
-                        setAuxCarry(((regA & 0xF) + (regD & 0xF)) >> 4);
-                        regA += regD;
-                        setFlagsZPSForReg(regA);
+                        ADD(regD);
                         break;
 
                     case "83":
-                        setAuxCarry(((regA & 0xF) + (regE & 0xF)) >> 4);
-                        regA += regE;
-                        setFlagsZPSForReg(regA);
+                        ADD(regE);
                         break;
 
                     case "84":
-                        setAuxCarry(((regA & 0xF) + (regH & 0xF)) >> 4);
-                        regA += regH;
-                        setFlagsZPSForReg(regA);
+                        ADD(regH);
                         break;
                     case "85":
-                        setAuxCarry(((regA & 0xF) + (regL & 0xF)) >> 4);
-                        regA += regL;
-                        setFlagsZPSForReg(regA);
+                        ADD(regL);
                         break;
 
                     case "86":
                         M = regL;
                         M |= (regH << 8);
                         temp = Convert.ToInt16(memory[M], 16);
-                        setAuxCarry(((regA & 0xF) + (temp & 0xF)) >> 4);
-                        regA += temp;
-                        setFlagsZPSForReg(regA);
+                        ADD(temp);
                         break;
 
                     case "C6":
                         currentByte++;
                         temp = Convert.ToInt16(memory[currentByte], 16);
-                        setAuxCarry(((regA & 0xF) + (temp & 0xF)) >> 4);
-                        regA += temp;
-                        setFlagsZPSForReg(regA);
+                        ADD(temp);
                         break;
 
                     case "A7":
-                        regA &= regA;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regA);
                         break;
 
                     case "A0":
-                        regA &= regB;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regB);
                         break;
 
                     case "A1":
-                        regA &= regC;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regC);
                         break;
 
                     case "A2":
-                        regA &= regD;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regD);
                         break;
 
                     case "A3":
-                        regA &= regE;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regE);
                         break;
 
                     case "A4":
-                        regA &= regH;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regH);
                         break;
 
                     case "A5":
-                        regA &= regL;
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        ANA(regL);
                         break;
 
                     case "A6":
                         M = regL;
-                        M |= (regH<<8);
-                        regA &= Convert.ToInt16(memory[M], 16);
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        M |= (regH << 8);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        ANA(temp);
                         break;
 
                     case "E6":
                         currentByte++;
-                        regA &= Convert.ToInt16(memory[currentByte], 16);
-                        resetCarry();
-                        setAuxCarry(1);
-                        setFlagsZPSForReg(regA);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        ANA(temp);
                         break;
 
                     case "CD":
@@ -336,7 +279,7 @@ namespace _8050_Simulator
                         break;
 
                     case "DC":  // call on carry
-                        if ((flags & (1 << CARRY)) == 1)
+                        if (checkCarry())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -347,7 +290,7 @@ namespace _8050_Simulator
                         break;
 
                     case "FC":  // call on minus
-                        if ((flags & (1 << SIGN)) == 1)
+                        if (checkSignPositive())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -358,61 +301,52 @@ namespace _8050_Simulator
                         break;
 
                     case "2F":
-                        regA = ~regA;
-                        noFlagUpdates = 1;
+                        CMA();
                         break;
 
-                    case "3F":
-                        if ((flags & (1 << CARRY)) == 0)
+                    case "3F": // CMC
+                        if (checkCarry())
                         {
-                            setCarry();
+                            resetCarry();
                         }
                         else
                         {
-                            resetCarry();
+                            setCarry();
                         }
                         break;
 
                     case "BF":
-                        compareToA(regA);
-                        noFlagUpdates = 1;
+                        CMP(regA);
                         break;
 
                     case "B8":
-                        compareToA(regB);
-                        noFlagUpdates = 1;
+                        CMP(regB);
                         break;
 
                     case "B9":
-                        compareToA(regC);
-                        noFlagUpdates = 1;
+                        CMP(regC);
                         break;
 
                     case "BA":
-                        compareToA(regD);
-                        noFlagUpdates = 1;
+                        CMP(regD);
                         break;
 
                     case "BB":
-                        compareToA(regE);
-                        noFlagUpdates = 1;
+                        CMP(regE);
                         break;
 
                     case "BC":
-                        compareToA(regH);
-                        noFlagUpdates = 1;
+                        CMP(regH);
                         break;
 
                     case "BD":
-                        compareToA(regL);
-                        noFlagUpdates = 1;
+                        CMP(regL);
                         break;
 
                     case "BE":
                         M = regL;
                         M |= (regH << 8);
-                        compareToA(Convert.ToInt16(memory[M], 16));
-                        noFlagUpdates = 1;
+                        CMP(Convert.ToInt16(memory[M], 16));
                         break;
 
                     case "D4": // Call no Carry
@@ -427,7 +361,7 @@ namespace _8050_Simulator
                         break;
 
                     case "C4": // Call no Zero
-                        if ((flags & (1 << ZERO)) == 0)
+                        if (!checkZero())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -436,9 +370,9 @@ namespace _8050_Simulator
                             currentByte += 2;
                         }
                         break;
-                
+
                     case "F4":
-                        if ((flags & (1 << SIGN)) != 0)
+                        if (checkSignPositive())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -449,7 +383,7 @@ namespace _8050_Simulator
                         break;
 
                     case "EC": // call on parity 1
-                        if ((flags & (1 << PARITY)) != 0)
+                        if (checkParityEven())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -460,7 +394,7 @@ namespace _8050_Simulator
                         break;
 
                     case "E4": //call on parity 0
-                        if ((flags & (1 << PARITY)) == 0)
+                        if (!checkParityEven())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -472,13 +406,12 @@ namespace _8050_Simulator
 
                     case "FE": // compare imediate
                         currentByte++;
-                        temp = Convert.ToInt16(memory[currentByte],16);
-                        compareToA(temp);
-                        noFlagUpdates = 1;
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        CMP(temp);
                         break;
 
                     case "CC": // jump on zero
-                        if ((flags & (1 << ZERO)) != 0)
+                        if (checkZero())
                         {
                             currentByte = callFromMem(currentByte);
                         }
@@ -489,149 +422,70 @@ namespace _8050_Simulator
                         break;
 
                     case "09": // Add BC to HL
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp += (regC);
-                        temp += (regB << 8);
-
-                        if (temp > 0xFFFF)
-                        {
-                            setCarry();
-                            temp -= 0X10000;
-                        }
-
-                        regH = ((temp & 0xFF00) >> 8);
-                        regL = (temp & 0x00FF);
+                        DAD(regB, regC);
                         break;
 
                     case "19": // Add DE to HL
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp += (regE);
-                        temp += (regD << 8);
-
-                        if (temp > 0xFFFF)
-                        {
-                            setCarry();
-                            temp -= 0X10000;
-                        }
-
-                        regH = ((temp & 0xFF00) >> 8);
-                        regL = (temp & 0x00FF);
+                        DAD(regD, regE);
                         break;
 
                     case "29": // Add HL to HL
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp += (regL);
-                        temp += (regH << 8);
-
-                        if (temp > 0xFFFF)
-                        {
-                            setCarry();
-                            temp -= 0X10000;
-                        }
-
-                        regH = ((temp & 0xFF00) >> 8);
-                        regL = (temp & 0x00FF);
+                        DAD(regH, regL);
                         break;
 
                     case "39": // Add SP to HL
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp += stackPointer;
-
-                        if (temp > 0xFFFF)
-                        {
-                            setCarry();
-                            temp -= 0X10000;
-                        }
-
-                        regH = ((temp & 0xFF00) >> 8);
-                        regL = (temp & 0x00FF);
+                        DAD((stackPointer & 0xFF00), (stackPointer & 0xFF));
                         break;
 
                     case "3D": // decrement A
-                        regA--;
-                        setFlagsZPSForReg(regA);
+                        DCR(ref regA);
                         break;
 
                     case "05": // decrement B
-                        regB--;
-                        setFlagsZPSForReg(regB);
+                        DCR(ref regB);
                         break;
 
                     case "0D": // decrement C
-                        regC--;
-                        setFlagsZPSForReg(regC);
+                        DCR(ref regC);
                         break;
 
                     case "15": // decrement D
-                        regD--;
-                        setFlagsZPSForReg(regD);
+                        DCR(ref regD);
                         break;
 
                     case "1D": // decrement E
-                        regE--;
-                        setFlagsZPSForReg(regE);
+                        DCR(ref regE);
                         break;
 
                     case "25": // decrement H
-                        regH--;
-                        setFlagsZPSForReg(regH);
+                        DCR(ref regH);
                         break;
 
                     case "2D": // decrement L
-                        regL--;
-                        setFlagsZPSForReg(regL);
+                        DCR(ref regL);
                         break;
 
                     case "35": // decrement M
                         M = regL;
                         M += (regH << 8);
                         temp = Convert.ToInt16(memory[M], 16);
-                        temp--;
+                        DCR(ref temp);
                         memory[M] = temp.ToString("X2");
-                        setFlagsZPSForReg(temp);
                         break;
 
                     case "0B":
-                        temp = regC;
-                        temp += (regB << 8);
-                        temp--;
-                        if (temp < 0)
-                        {
-                            temp = 0xFFFF;
-                        }
-                        regC = (temp & 0xFF);
-                        regB = ((temp & 0XFF00) >> 8);
+                        DCX(ref regB, ref regC);
                         break;
 
                     case "1B":
-                        temp = regE;
-                        temp += (regD << 8);
-                        temp--;
-                        if (temp < 0)
-                        {
-                            temp = 0xFFFF;
-                        }
-                        regE = (temp & 0xFF);
-                        regD = ((temp & 0XFF00) >> 8);
+                        DCX(ref regD, ref regE);
                         break;
 
                     case "2B":
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp--;
-                        if (temp < 0)
-                        {
-                            temp = 0xFFFF;
-                        }
-                        regL = (temp & 0xFF);
-                        regH = ((temp & 0XFF00) >> 8);
+                        DCX(ref regH, ref regL);
                         break;
 
-                    case "3B":
+                    case "3B": // DCX SP
                         stackPointer--;
                         if (stackPointer < 0)
                         {
@@ -639,11 +493,11 @@ namespace _8050_Simulator
                         }
                         break;
 
-                    case "76":
+                    case "76": //HLT
                         halted = true;
                         break;
 
-                    case "DB":
+                    case "DB": // IN port 12
                         currentByte++;
                         if (Convert.ToInt16(memory[currentByte], 16) == 0x12)
                         {
@@ -652,122 +506,58 @@ namespace _8050_Simulator
                         break;
 
                     case "3C": //Increment A
-                        regA++;
-                        if (regA > 0xFF)
-                        {
-                            regA -= 0X100;
-                        }
-                        setFlagsZPSForReg(regA);
+                        INR(ref regA);
                         break;
 
                     case "04"://Increment B
-                        regB++;
-                        if (regB > 0xFF)
-                        {
-                            regB -= 0X100;
-                        }
-                        setFlagsZPSForReg(regB);
+                        INR(ref regB);
                         break;
 
                     case "0C"://Increment C
-                        regC++;
-                        if (regC > 0xFF)
-                        {
-                            regC -= 0X100;
-                        }
-                        setFlagsZPSForReg(regC);
+                        INR(ref regC);
                         break;
 
                     case "14"://Increment D
-                        regD++;
-                        if (regD > 0xFF)
-                        {
-                            regD -= 0X100;
-                        }
-                        setFlagsZPSForReg(regD);
+                        INR(ref regD);
                         break;
 
                     case "1C"://Increment E
-                        regE++;
-                        if (regE > 0xFF)
-                        {
-                            regE -= 0X100;
-                        }
-                        setFlagsZPSForReg(regE);
+                        INR(ref regE);
                         break;
 
                     case "24"://Increment H
-                        regH++;
-                        if (regH > 0xFF)
-                        {
-                            regH -= 0X100;
-                        }
-                        setFlagsZPSForReg(regH);
+                        INR(ref regH);
                         break;
 
                     case "2C"://Increment L
-                        regL++;
-                        if (regL > 0xFF)
-                        {
-                            regL -= 0X100;
-                        }
-                        setFlagsZPSForReg(regL);
+                        INR(ref regL);
                         break;
 
                     case "34"://Increment M
                         M = regL;
                         M += (regH << 8);
                         temp = Convert.ToInt16(memory[M], 16);
-                        temp++;
-                        if (temp > 0xFF)
-                        {
-                            temp -= 0X100;
-                        }
+                        INR(ref temp);
                         memory[M] = temp.ToString("X2");
-                        setFlagsZPSForReg(regA);
                         break;
-                        
+
                     case "03": //increment BC
-                        temp = regC;
-                        temp += (regB << 8);
-                        temp++;
-                        if (temp > 0xFFFF)
-                        {
-                            temp -= 0x10000;
-                        }
-                        regC = (temp & 0xFF);
-                        regB = ((temp & 0xFF00) >> 8);
+                        INX(ref regB, ref regC);
                         break;
 
                     case "13": //increment DE
-                        temp = regE;
-                        temp += (regD << 8);
-                        temp++;
-                        if (temp > 0xFFFF)
-                        {
-                            temp -= 0x10000;
-                        }
-                        regE = (temp & 0xFF);
-                        regD = ((temp & 0xFF00) >> 8);
+                        INX(ref regD, ref regE);
                         break;
 
                     case "23": //increment HL
-                        temp = regL;
-                        temp += (regH << 8);
-                        temp++;
-                        if (temp > 0xFFFF)
-                        {
-                            temp -= 0x10000;
-                        }
-                        regL = (temp & 0xFF);
-                        regH = ((temp & 0xFF00) >> 8);
+                        INX(ref regH, ref regL);
                         break;
 
                     case "33": //increment SP
                         stackPointer++;
-                        if (stackPointer > 0xFFFF)
+                        if (stackPointer >= 0x10000)
                         {
-                            stackPointer =0;
+                            stackPointer = 0;
                         }
                         break;
 
@@ -776,12 +566,20 @@ namespace _8050_Simulator
                         {
                             currentByte = jumpFromMemory(currentByte);
                         }
+                        else
+                        {
+                            currentByte += 2;
+                        }
                         break;
 
                     case "FA":
                         if (!checkSignPositive())
                         {
                             currentByte = jumpFromMemory(currentByte);
+                        }
+                        else
+                        {
+                            currentByte += 2;
                         }
                         break;
 
@@ -794,12 +592,20 @@ namespace _8050_Simulator
                         {
                             currentByte = jumpFromMemory(currentByte);
                         }
+                        else
+                        {
+                            currentByte += 2;
+                        }
                         break;
 
                     case "C2":
                         if (!checkZero())
                         {
                             currentByte = jumpFromMemory(currentByte);
+                        }
+                        else
+                        {
+                            currentByte += 2;
                         }
                         break;
 
@@ -808,12 +614,20 @@ namespace _8050_Simulator
                         {
                             currentByte = jumpFromMemory(currentByte);
                         }
+                        else
+                        {
+                            currentByte += 2;
+                        }
                         break;
 
                     case "EA":
                         if (checkParityEven())
                         {
                             currentByte = jumpFromMemory(currentByte);
+                        }
+                        else
+                        {
+                            currentByte += 2;
                         }
                         break;
 
@@ -822,12 +636,20 @@ namespace _8050_Simulator
                         {
                             currentByte = jumpFromMemory(currentByte);
                         }
+                        else
+                        {
+                            currentByte += 2;
+                        }
                         break;
 
                     case "CA":
                         if (checkZero())
                         {
                             currentByte = jumpFromMemory(currentByte);
+                        }
+                        else
+                        {
+                            currentByte += 2;
                         }
                         break;
 
@@ -842,7 +664,7 @@ namespace _8050_Simulator
                     case "0A": // Load A from Memory (location specified by BC)
                         M = regC;
                         M += (regB << 8);
-                        regA = Convert.ToInt16(memory[M],16);
+                        regA = Convert.ToInt16(memory[M], 16);
                         break;
 
                     case "1A": // Load A from Memory (location specified by DE)
@@ -885,127 +707,131 @@ namespace _8050_Simulator
                         currentByte++;
                         stackPointer = Convert.ToUInt16(memory[currentByte], 16);
                         currentByte++;
-                        stackPointer += (UInt16) (Convert.ToUInt16(memory[currentByte], 16) << 8);
+                        stackPointer += (UInt16)(Convert.ToUInt16(memory[currentByte], 16) << 8);
                         break;
 
                     case "78": // Move B to A
-                        regA = regB;
+                        MOV(ref regB, ref regA);
                         break;
 
                     case "79": // Move C to A
-                        regA = regC;
+                        MOV(ref regC, ref regA);
                         break;
 
                     case "7A": // Move D to A
-                        regA = regD;
+                        MOV(ref regD, ref regA);
                         break;
 
                     case "7B": // Move E to A
-                        regA = regE;
+                        MOV(ref regE, ref regA);
                         break;
 
                     case "7C": // Move H to A
-                        regA = regH;
+                        MOV(ref regH, ref regA);
                         break;
 
                     case "7D": // Move L to A
-                        regA = regL;
+                        MOV(ref regL, ref regA);
                         break;
 
                     case "7E": // Move M to A
                         M = regL;
                         M += (regH << 8);
-                        regA = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regA);
                         break;
 
                     case "47": // Move A to B
-                        regB = regA;
+                        MOV(ref regA, ref regB);
                         break;
 
                     case "41": // Move C to B
-                        regB = regC;
+                        MOV(ref regC, ref regB);
                         break;
 
                     case "42": // Move D to B
-                        regB = regD;
+                        MOV(ref regD, ref regB);
                         break;
 
                     case "43": // Move E to B
-                        regB = regE;
+                        MOV(ref regE, ref regB);
                         break;
 
                     case "44": // Move H to B
-                        regB = regH;
+                        MOV(ref regH, ref regB);
                         break;
 
                     case "45": // Move L to B
-                        regB = regL;
+                        MOV(ref regL, ref regB);
                         break;
 
                     case "46": // Move M to B
                         M = regL;
                         M += (regH << 8);
-                        regB = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regB);
                         break;
 
                     case "4F": // Move A to C
-                        regC = regA;
+                        MOV(ref regA, ref regC);
                         break;
 
                     case "48": // Move B to C
-                        regC = regB;
+                        MOV(ref regB, ref regC);
                         break;
 
                     case "4A": // Move D to C
-                        regC = regD;
+                        MOV(ref regD, ref regC);
                         break;
 
                     case "4B": // Move E to C
-                        regC = regE;
+                        MOV(ref regE, ref regC);
                         break;
 
                     case "4C": // Move H to C
-                        regC = regH;
+                        MOV(ref regH, ref regC);
                         break;
 
                     case "4D": // Move L to C
-                        regC = regL;
+                        MOV(ref regL, ref regC);
                         break;
 
                     case "4E": // Move M to C
                         M = regL;
                         M += (regH << 8);
-                        regC = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regC);
                         break;
 
                     case "57": // Move A
-                        regD = regA;
+                        MOV(ref regA, ref regD);
                         break;
 
                     case "50": // Move B 
-                        regD = regB;
+                        MOV(ref regB, ref regD);
                         break;
 
                     case "51": // Move C
-                        regD = regC;
+                        MOV(ref regC, ref regD);
                         break;
 
                     case "53": // Move E
-                        regD = regE;
+                        MOV(ref regE, ref regD);
                         break;
 
                     case "54": // Move H
-                        regD = regH;
+                        MOV(ref regH, ref regD);
                         break;
 
                     case "55": // Move L
-                        regD = regL;
+                        MOV(ref regL, ref regD);
                         break;
 
                     case "56": // Move M
                         M = regL;
                         M += (regH << 8);
-                        regD = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regD);
                         break;
 
                     case "D3":
@@ -1017,93 +843,96 @@ namespace _8050_Simulator
                         break;
 
                     case "5F":
-                        regE = regA;
+                        MOV(ref regA, ref regE);
                         break;
 
                     case "58":
-                        regE = regB;
+                        MOV(ref regB, ref regE);
                         break;
 
                     case "59":
-                        regE = regC;
+                        MOV(ref regC, ref regE);
                         break;
 
                     case "5A":
-                        regE = regD;
+                        MOV(ref regD, ref regE);
                         break;
 
                     case "5C":
-                        regE = regH;
+                        MOV(ref regE, ref regE);
                         break;
 
                     case "5D":
-                        regE = regL;
+                        MOV(ref regH, ref regE);
                         break;
 
                     case "5E":
                         M = regL;
                         M += (regH << 8);
-                        regE = Convert.ToInt16(memory[M] ,16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regE);
                         break;
 
                     case "67":
-                        regH = regA;
+                        MOV(ref regA, ref regH);
                         break;
 
                     case "60":
-                        regH = regB;
+                        MOV(ref regB, ref regH);
                         break;
 
                     case "61":
-                        regH = regC;
+                        MOV(ref regC, ref regH);
                         break;
 
                     case "62":
-                        regH = regD;
+                        MOV(ref regD, ref regH);
                         break;
 
                     case "63":
-                        regH = regE;
+                        MOV(ref regE, ref regH);
                         break;
 
                     case "65":
-                        regH = regL;
+                        MOV(ref regL, ref regH);
                         break;
 
                     case "66":
                         M = regL;
                         M += (regH << 8);
-                        regH = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regH);
                         break;
 
                     case "6F":
-                        regL = regA;
+                        MOV(ref regA, ref regL);
                         break;
 
                     case "68":
-                        regL = regB;
+                        MOV(ref regB, ref regL);
                         break;
 
                     case "69":
-                        regL = regC;
+                        MOV(ref regC, ref regL);
                         break;
 
                     case "6A":
-                        regL = regD;
+                        MOV(ref regD, ref regL);
                         break;
 
                     case "6B":
-                        regL = regE;
+                        MOV(ref regE, ref regL);
                         break;
 
                     case "6C":
-                        regL = regH;
+                        MOV(ref regH, ref regL);
                         break;
 
                     case "6E":
                         M = regL;
                         M += (regH << 8);
-                        regE = Convert.ToInt16(memory[M], 16);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        MOV(ref temp, ref regL);
                         break;
 
                     case "77":
@@ -1151,37 +980,44 @@ namespace _8050_Simulator
 
                     case "3E":
                         currentByte++;
-                        regA = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regA);
                         break;
 
                     case "06":
                         currentByte++;
-                        regB = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regB);
                         break;
 
                     case "0E":
                         currentByte++;
-                        regC = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regC);
                         break;
 
                     case "16":
                         currentByte++;
-                        regD = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regD);
                         break;
 
                     case "1E":
                         currentByte++;
-                        regE = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regE);
                         break;
 
                     case "26":
                         currentByte++;
-                        regH = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regH);
                         break;
 
                     case "2E":
                         currentByte++;
-                        regL = Convert.ToInt16(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
+                        MOV(ref temp, ref regL);
                         break;
 
                     case "36":
@@ -1285,7 +1121,7 @@ namespace _8050_Simulator
                         break;
 
                     case "17":
-                        temp = regA;
+                        temp = (checkCarry_Int());
                         if ((regA & 0x80) != 0)
                         {
                             setCarry();
@@ -1294,11 +1130,11 @@ namespace _8050_Simulator
                         {
                             resetCarry();
                         }
-                        regA = ((temp << 1) & 0xFF);
+                        regA = ((regA << 1) & 0xFF) + temp;
                         break;
 
                     case "1F":
-                        temp = regA;
+                        temp = regA + (checkCarry_Int() << 8);
                         if ((regA & 0x01) != 0)
                         {
                             setCarry();
@@ -1331,7 +1167,7 @@ namespace _8050_Simulator
                         {
                             resetCarry();
                         }
-                        noFlagUpdates = 1;
+                        //noFlagUpdates = 1;
                         break;
 
                     case "F8": // Return on Minus
@@ -1388,7 +1224,7 @@ namespace _8050_Simulator
                         {
                             resetCarry();
                         }
-                        noFlagUpdates = 1;
+                        //noFlagUpdates = 1;
                         break;
 
                     case "C8": // Return on NZ
@@ -1493,6 +1329,7 @@ namespace _8050_Simulator
 
                     case "37":
                         setCarry();
+                        //noFlagUpdates = 1;
                         break;
 
                     case "97": // Sub no borrow
@@ -1540,48 +1377,187 @@ namespace _8050_Simulator
 
                     case "D6":
                         currentByte++;
-                        temp = Convert.ToByte(memory[currentByte], 16);
+                        temp = Convert.ToInt16(memory[currentByte], 16);
                         regA += ((~temp + 1) & 0x1FF);
                         break;
 
+                    case "EB": // exchange DE with HL
+                        temp = regL;
+                        regL = regE;
+                        regE = temp;
+                        temp = regD;
+                        regD = regB;
+                        regB = temp;
+                        break;
 
+                    case "AF":
+                        XRA(regA);
+                        break;
 
+                    case "A8":
+                        XRA(regB);
+                        break;
 
+                    case "A9":
+                        XRA(regC);
+                        break;
 
+                    case "AA":
+                        XRA(regD);
+                        break;
 
+                    case "AB":
+                        XRA(regE);
+                        break;
 
+                    case "AC":
+                        XRA(regH);
+                        break;
 
+                    case "AD":
+                        XRA(regL);
+                        break;
 
+                    case "AE":
+                        M = regL;
+                        M += (regH << 8);
+                        temp = Convert.ToInt16(memory[M], 16);
+                        XRA(temp);
+                        break;
 
+                    case "EE":
+                        currentByte++;
+                        temp = Convert.ToInt16(memory[M], 16);
+                        XRA(temp);
+                        break;
+
+                    case "E3":
+                        temp = regH;
+                        regH = Convert.ToInt16(memory[stackPointer + 1], 16);
+                        memory[stackPointer + 1] = temp.ToString("X2");
+                        temp = regL;
+                        regL = Convert.ToInt16(memory[stackPointer], 16);
+                        memory[stackPointer] = temp.ToString("X2");
+                        break;
 
                     default:
                         break;
-                       
+
                 }
 
 
-                // Adjust Flags
-                
-                if (noFlagUpdates == 0)
-                {
-                    //Set or Unset Carry Flag
-                    if (regA > 0xFF)
-                    {
-                        regA = regA - 0x100;
-                        setCarry();
-                    }
-                    else
-                    {
-                        resetCarry();
-                    }
-                }
-                else
-                {
-                    noFlagUpdates = 0;
-                }
-
-                currentByte++;        
+                currentByte++;
             }
+        }
+
+        private void adjustCarry()
+        {
+            if (regA > 0xFF)
+            {
+                setCarry();
+                regA -= 0x100;
+            }
+            else
+            {
+                resetCarry();
+            }
+        }
+
+        private void ADC(int regX)
+        {
+            setAuxCarry((regA & 0xF) + (regX & 0xF) + checkCarry_Int());
+            regA += regX + checkCarry_Int();
+            setFlagsZPSForReg(regA);
+        }
+
+        private void ADD(int regX)
+        {
+            setAuxCarry(((regA & 0xF) + (regX & 0xF)) >> 4);
+            regA += regX;
+            if (regA >= 0x100)
+            {
+                regA -= 0x100;
+            }
+            setFlagsZPSForReg(regA);
+        }
+
+        private void ANA(int regX)
+        {
+            regA &= regX;
+            resetCarry();
+            setAuxCarry(1);
+            setFlagsZPSForReg(regA);
+        }
+
+        private void CMA()
+        {
+            regA = (~regA & 0xFF);
+        }
+
+        private void DAD(int regxH, int regxL) 
+        {
+            int priv_temp = regL;
+            priv_temp += (regH << 8);
+            priv_temp += (regC);
+            priv_temp += (regB << 8);
+
+            if (priv_temp > 0xFFFF)
+            {
+                setCarry();
+                priv_temp -= 0X10000;
+            }
+
+            regH = ((priv_temp & 0xFF00) >> 8);
+            regL = (priv_temp & 0x00FF);
+        }
+
+        private void DCR(ref int regX)
+        {
+            regX--;
+            setFlagsZPSForReg(regX);
+        }
+
+        private void DCX(ref int regxH, ref int regxL)
+        {
+            short priv_temp = (short) regxL;
+            priv_temp += (short)(regxH << 8);
+            priv_temp--;
+            regxL = priv_temp & 0xFF;
+            regxH = (priv_temp & 0xFF00) >> 8;
+        }
+
+        private void INR(ref int regX)
+        {
+            regX = regX + 1;
+            if (regX == 0x100)
+            {
+                regX -= 0x100;
+            }
+            setFlagsZPSForReg(regX);
+        }
+
+        private void INX(ref int regxH, ref int regxL)
+        {
+            int priv_temp = regxL;
+            priv_temp += (regxH << 8);
+            priv_temp++;
+            if (priv_temp >= 0x10000)
+            {
+                priv_temp -= 0x10000;
+            }
+            regxL = (priv_temp & 0xFF);
+            regxH = ((priv_temp & 0xFF00) >> 8);
+        }
+
+        private void MOV(ref int regFrom, ref int regTo)
+        {
+            regTo = regFrom;
+        }
+
+        private void XRA(int regX)
+        {
+            regA ^= regX;
+            setFlagsZPSForReg(regX);
         }
 
         private void push(int byteToPush)
@@ -1594,6 +1570,11 @@ namespace _8050_Simulator
         {
             int value = Convert.ToInt16(memory[stackPointer], 16);
             stackPointer++;
+            if (stackPointer > 0xFFFF)
+            {
+                halted = true;
+                stackPointer = 0xFFFF;
+            }
             return value;
         }
 
@@ -1649,7 +1630,7 @@ namespace _8050_Simulator
             flags &= ~(1 << PARITY);
         }
 
-        private void compareToA(int regX)
+        private void CMP(int regX)
         {
             if (regA < regX)
             { 
@@ -1675,8 +1656,7 @@ namespace _8050_Simulator
             M = Convert.ToInt16(memory[mCurrentByte], 16);
             mCurrentByte++;
             M |= (Convert.ToInt16(memory[mCurrentByte], 16) << 8);
-            mCurrentByte++;
-            return mCurrentByte = M - programStartAddr - 1; // -1 corrects for increment at the end of loop
+            return mCurrentByte = M - 1; // -1 corrects for increment at the end of loop
         }
 
         private int callFromMem(int mCurrentByte)
@@ -1796,6 +1776,22 @@ namespace _8050_Simulator
             pcTextbox.Text = currentByte.ToString("X4") + "h";
         }
 
+        private void updateStackUI()
+        {
+            while (0xFFFF - stackPointer < StackListBox.Items.Count)
+            {
+                StackListBox.Items.RemoveAt(StackListBox.Items.Count-1);
+            }
+            while (0xFFFF - stackPointer > StackListBox.Items.Count)
+            {
+                if (memory[0xFFFE - StackListBox.Items.Count] == null)
+                {
+                    memory[0xFFFE - StackListBox.Items.Count] = "00";
+                }
+                StackListBox.Items.Insert(0,"0x" + (0xFFFE - StackListBox.Items.Count).ToString("X4") + "   0x" + memory[0xFFFE - StackListBox.Items.Count]);
+            }
+        }
+
         private void updateCompletedAssemblyUI()
         {
 
@@ -1806,7 +1802,7 @@ namespace _8050_Simulator
             outputPort = regX;
         }
 
-        private void updateOut_UI(int out11)
+        private void updateIO_UI(int out11, int in12)
         {
             outP0.Checked = ((out11 & 0X01) != 0);
             outP1.Checked = ((out11 & 0X02) != 0);
@@ -1816,6 +1812,16 @@ namespace _8050_Simulator
             outP5.Checked = ((out11 & 0X20) != 0);
             outP6.Checked = ((out11 & 0X40) != 0);
             outP7.Checked = ((out11 & 0X80) != 0);
+
+            inputPort = Convert.ToInt32(in0.Checked);
+            inputPort |= Convert.ToInt32(in1.Checked) << 1;
+            inputPort |= Convert.ToInt32(in2.Checked) << 2;
+            inputPort |= Convert.ToInt32(in3.Checked) << 3;
+            inputPort |= Convert.ToInt32(in4.Checked) << 4;
+            inputPort |= Convert.ToInt32(in5.Checked) << 5;
+            inputPort |= Convert.ToInt32(in6.Checked) << 6;
+            inputPort |= Convert.ToInt32(in7.Checked) << 7;
+
         }
 
         private void speedScrollbar_Scroll(object sender, ScrollEventArgs e)
@@ -1823,6 +1829,17 @@ namespace _8050_Simulator
             speed = speedScrollbar.Value;
         }
 
+        private void loadHexButton_Click(object sender, EventArgs e)
+        {
+            loadHex();
+        }
+
+        private void assembleButton_Click(object sender, EventArgs e)
+        {
+            assemble();
+        }
+
         
     }
+
 }
